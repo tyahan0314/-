@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ひまりちゃんマシーンⅡ</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f4d7ec;
+    font-family: system-ui, sans-serif;
+  }
+
+  .machine {
+    width: min(94vw, 430px);
+    padding: 18px;
+    border-radius: 28px;
+    background: linear-gradient(#ff8fc4, #ff65aa);
+    border: 6px solid #fff;
+    box-shadow: 0 10px 0 #c94b83, 0 18px 25px #0003;
+    text-align: center;
+    transition: 0.25s;
+  }
+
+  .machine.glow {
+    box-shadow:
+      0 0 18px #fff,
+      0 0 35px #ffd700,
+      0 0 60px #ff4fb3,
+      0 10px 0 #c94b83;
+  }
+
+  .machine.rainbow {
+    animation: rainbowGlow 0.45s infinite;
+  }
+
+  @keyframes rainbowGlow {
+    0% { box-shadow: 0 0 35px red; }
+    20% { box-shadow: 0 0 35px orange; }
+    40% { box-shadow: 0 0 35px yellow; }
+    60% { box-shadow: 0 0 35px lime; }
+    80% { box-shadow: 0 0 35px blue; }
+    100% { box-shadow: 0 0 35px violet; }
+  }
+
+  h1 {
+    margin: 0 0 12px;
+    color: white;
+    font-size: 28px;
+    text-shadow: 2px 3px 0 #c63f7a;
+  }
+
+  .result {
+    height: 48px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+    background: #fff7c8;
+    border: 4px solid #fff;
+    color: #d8467e;
+    font-size: 24px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slots {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: 14px;
+    border-radius: 22px;
+    background: #fff;
+    border: 5px solid #ffd3e7;
+  }
+
+  .slot {
+    width: 30%;
+    aspect-ratio: 1 / 1;
+    border-radius: 18px;
+    background: #fff2f8;
+    border: 4px solid #ffb6d7;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+
+  .slot img.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .slot img.drop-in {
+    animation: dropIn 0.42s ease-out forwards;
+  }
+
+  .slot img.drop-out {
+    animation: dropOut 0.32s ease-in forwards;
+  }
+
+  @keyframes dropIn {
+    0% {
+      opacity: 0;
+      transform: translateY(-130%);
+    }
+    75% {
+      opacity: 1;
+      transform: translateY(10%);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes dropOut {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(130%);
+    }
+  }
+
+  .stop-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .stop-buttons button,
+  .start-btn {
+    border: none;
+    border-radius: 16px;
+    font-weight: 900;
+    box-shadow: 0 5px 0 #d7a7bd;
+    background: #fff;
+    color: #d8467e;
+  }
+
+  .stop-buttons button {
+    flex: 1;
+    padding: 13px 0;
+    font-size: 20px;
+  }
+
+  .start-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 17px;
+    font-size: 26px;
+  }
+
+  button:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #d7a7bd;
+  }
+
+  button:disabled {
+    opacity: 0.45;
+  }
+
+  .medal {
+    margin-top: 14px;
+    padding: 10px;
+    border-radius: 16px;
+    background: #fff;
+    color: #d8467e;
+    font-size: 26px;
+    font-weight: 900;
+  }
+
+  .notice {
+    margin-top: 8px;
+    color: white;
+    font-weight: 800;
+    text-shadow: 1px 2px 0 #c63f7a;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="machine" id="machine">
+  <h1>ひまりちゃんマシーンⅡ</h1>
+
+  <div class="result" id="result">メダルを入れてね</div>
+
+  <div class="slots">
+    <div class="slot"><img id="slot0"></div>
+    <div class="slot"><img id="slot1"></div>
+    <div class="slot"><img id="slot2"></div>
+  </div>
+
+  <div class="stop-buttons">
+    <button id="btn0" onclick="openSlot(0)" disabled>左</button>
+    <button id="btn1" onclick="openSlot(1)" disabled>まんなか</button>
+    <button id="btn2" onclick="openSlot(2)" disabled>右</button>
+  </div>
+
+  <button class="start-btn" id="startBtn" onclick="startGame()">スタート</button>
+
+  <div class="medal" id="medalText">メダル：10枚</div>
+  <div class="notice" id="notice">1回 1メダル</div>
+</div>
+
+<script>
+  let medals = 10;
+  let finalSymbols = [];
+  let opened = [false, false, false];
+  let currentOutcome = null;
+  let playing = false;
+
+  const normalPrizes = [1, 3, 7, 10];
+
+  const images = {
+    1: "images/1medal.png",
+    3: "images/3medal.png",
+    7: "images/7medal.png",
+    10: "images/10medal.png",
+    15: "images/15medal.png",
+    30: "images/30medal.png",
+    777: "images/777medal.png"
+  };
+
+  const sounds = {
+    start: new Audio("sounds/start.mp3"),
+    open: new Audio("sounds/open.mp3"),
+    reach: new Audio("sounds/reach.mp3"),
+    win: new Audio("sounds/win.mp3"),
+    rare: new Audio("sounds/rare.mp3"),
+    rainbow: new Audio("sounds/rainbow.mp3"),
+    lose: new Audio("sounds/lose.mp3")
+  };
+
+  function playSound(name) {
+    const sound = sounds[name];
+    if (!sound) return;
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+  }
+
+  function startGame() {
+    if (playing) return;
+
+    if (medals <= 0) {
+      document.getElementById("result").textContent = "メダルがないよ！";
+      return;
+    }
+
+    playing = true;
+    medals -= 1;
+    updateMedals();
+
+    document.getElementById("machine").classList.remove("glow", "rainbow");
+    document.getElementById("result").textContent = "どこから押す？";
+
+    disableStart(true);
+    disableStopButtons(true);
+
+    dropOutOldSymbols(() => {
+      currentOutcome = drawOutcome();
+      finalSymbols = createSymbols(currentOutcome);
+      opened = [false, false, false];
+
+      disableStopButtons(false);
+      playSound("start");
+    });
+  }
+
+  function openSlot(index) {
+    if (!playing || opened[index]) return;
+
+    opened[index] = true;
+
+    const img = document.getElementById(`slot${index}`);
+    img.src = images[finalSymbols[index]];
+    img.className = "";
+    void img.offsetWidth;
+    img.classList.add("drop-in");
+
+    document.getElementById(`btn${index}`).disabled = true;
+    playSound("open");
+
+    setTimeout(() => {
+      checkReach();
+
+      if (opened.every(Boolean)) {
+        finishGame();
+      }
+    }, 430);
+  }
+
+  function drawOutcome() {
+    const isLose = Math.random() < 0.5;
+
+    if (isLose) {
+      return { type: "lose" };
+    }
+
+    const r = Math.random() * 100;
+
+    if (r < 50) return { type: "win", prize: 1 };
+    if (r < 80) return { type: "win", prize: 3 };
+    if (r < 90) return { type: "win", prize: 7 };
+    if (r < 94) return { type: "win", prize: 10 };
+    if (r < 97) return { type: "win", prize: 15 };
+    if (r < 99) return { type: "win", prize: 30 };
+    return { type: "win", prize: 777 };
+  }
+
+  function createSymbols(outcome) {
+    if (outcome.type === "win") {
+      return [outcome.prize, outcome.prize, outcome.prize];
+    }
+
+    return createLoseSymbols();
+  }
+
+  function createLoseSymbols() {
+    const twoSame = Math.random() < 0.5;
+
+    if (twoSame) {
+      const same = pick(normalPrizes);
+      let different = pick(normalPrizes);
+
+      while (different === same) {
+        different = pick(normalPrizes);
+      }
+
+      return shuffle([same, same, different]);
+    }
+
+    return shuffle([...normalPrizes]).slice(0, 3);
+  }
+
+  function checkReach() {
+    const openedSymbols = finalSymbols.filter((_, i) => opened[i]);
+
+    if (openedSymbols.length !== 2) return;
+
+    if (openedSymbols[0] === openedSymbols[1]) {
+      document.getElementById("result").textContent = "リーチ！！";
+      playSound("reach");
+    }
+  }
+
+  function finishGame() {
+    disableStopButtons(true);
+
+    setTimeout(() => {
+      if (currentOutcome.type === "lose") {
+        document.getElementById("result").textContent = "おしい！もういっかい！";
+        playSound("lose");
+      } else {
+        const prize = currentOutcome.prize;
+        medals += prize;
+        updateMedals();
+
+        document.getElementById("result").textContent = `やったー！${prize}メダル！`;
+
+        if (prize === 15 || prize === 30) {
+          document.getElementById("machine").classList.add("glow");
+          playSound("rare");
+        } else if (prize === 777) {
+          document.getElementById("machine").classList.add("rainbow");
+          playSound("rainbow");
+        } else {
+          playSound("win");
+        }
+      }
+
+      playing = false;
+      disableStart(false);
+    }, 250);
+  }
+
+  function dropOutOldSymbols(callback) {
+    const imgs = [
+      document.getElementById("slot0"),
+      document.getElementById("slot1"),
+      document.getElementById("slot2")
+    ];
+
+    const hasVisible = imgs.some(img => img.classList.contains("drop-in") || img.classList.contains("show"));
+
+    if (!hasVisible) {
+      imgs.forEach(img => {
+        img.removeAttribute("src");
+        img.className = "";
+      });
+      callback();
+      return;
+    }
+
+    imgs.forEach(img => {
+      img.className = "";
+      void img.offsetWidth;
+      img.classList.add("drop-out");
+    });
+
+    setTimeout(() => {
+      imgs.forEach(img => {
+        img.removeAttribute("src");
+        img.className = "";
+      });
+      callback();
+    }, 340);
+  }
+
+  function updateMedals() {
+    document.getElementById("medalText").textContent = `メダル：${medals}枚`;
+  }
+
+  function disableStart(flag) {
+    document.getElementById("startBtn").disabled = flag;
+  }
+
+  function disableStopButtons(flag) {
+    for (let i = 0; i < 3; i++) {
+      document.getElementById(`btn${i}`).disabled = flag;
+    }
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function shuffle(arr) {
+    return arr.sort(() => Math.random() - 0.5);
+  }
+</script>
+
+</body>
+</html>
